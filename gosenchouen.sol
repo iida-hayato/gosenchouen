@@ -178,7 +178,7 @@ contract TokenERC20 {
 /*       ADVANCED TOKEN STARTS HERE       */
 /******************************************/
 
-contract MyAdvancedToken is owned, TokenERC20 {
+contract Gosenchouen is owned, TokenERC20 {
 
     uint256 public sellPrice;
     uint256 public buyPrice;
@@ -189,7 +189,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken() TokenERC20() public {}
+    function Gosenchouen() TokenERC20() public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
