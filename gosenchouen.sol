@@ -140,7 +140,7 @@ contract TokenERC20 {
     }
 
    
-  function totalSupply()  constant public returns (uint256 totalSupply) {
+  function totalSupply()  constant public returns (uint) {
     return _totalSupply;
   }
 
