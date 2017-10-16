@@ -1,10 +1,8 @@
 pragma solidity ^0.4.16;
 
-import "./SafeMath.sol";
 
 
 contract owned {
-    using SafeMath for uint256;
 
     address public owner;
 
@@ -30,6 +28,7 @@ contract TokenERC20 {
     string public constant name = "5000兆円";
     //5000兆
     uint256 _totalSupply = 5000000000000000 * 1000000000000000000;
+    uint256 _currentSupply = 0;
     
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
@@ -168,7 +167,7 @@ contract TokenERC20 {
         return true;
     }
     
-  function totalSupply()  constant returns (uint256 totalSupply) {
+  function totalSupply()  constant public returns (uint256 totalSupply) {
     return _totalSupply;
   }
 
@@ -180,8 +179,7 @@ contract TokenERC20 {
 
 contract Gosenchouen is owned, TokenERC20 {
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
+    uint256 public buyPrice = 1 ether;
 
     mapping (address => bool) public frozenAccount;
 
@@ -221,25 +219,24 @@ contract Gosenchouen is owned, TokenERC20 {
         FrozenFunds(target, freeze);
     }
 
-    /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
-    /// @param newSellPrice Price the users can sell to the contract
+    /// @notice Allow users to buy tokens for `newBuyPrice` eth
     /// @param newBuyPrice Price users can buy from the contract
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
-        sellPrice = newSellPrice;
+    function setPrices(uint256 newBuyPrice) onlyOwner public {
         buyPrice = newBuyPrice;
     }
 
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
-        uint amount = msg.value / buyPrice;               // calculates the amount
-        _transfer(this, msg.sender, amount);              // makes the transfers
-    }
+        require(msg.value > 0);
+        
+        uint256 amount = msg.value / buyPrice;               // calculates the amount
 
-    /// @notice Sell `amount` tokens to contract
-    /// @param amount amount of tokens to be sold
-    function sell(uint256 amount) public {
-        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
-        _transfer(msg.sender, this, amount);              // makes the transfers
-        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+        require(_currentSupply + amount <= _totalSupply);
+
+        _transfer(owner, msg.sender, amount);              // makes the transfers
+        
+        owner.transfer(msg.value);
+        _currentSupply += amount;
     }
+    
 }
