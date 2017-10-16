@@ -1,5 +1,6 @@
 pragma solidity ^0.4.16;
 
+import "./SafeMath.sol";
 
 
 contract owned {
@@ -23,6 +24,9 @@ contract owned {
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
+    
+	using SafeMath for uint256;
+	
     // Public variables of the token
     string public constant symbol = "GSC";
     string public constant name = "5000兆円";
@@ -61,16 +65,16 @@ contract TokenERC20 {
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
+        require(balanceOf[_to].add(_value) > balanceOf[_to]);
         // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        uint previousBalances = balanceOf[_from].add(balanceOf[_to]);
         // Subtract from the sender
-        balanceOf[_from] -= _value;
+        balanceOf[_from] = balanceOf[_from].sub(_value);
         // Add the same to the recipient
-        balanceOf[_to] += _value;
+        balanceOf[_to] = balanceOf[_to].add(_value);
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        assert(balanceOf[_from].add(balanceOf[_to]) == previousBalances);
     }
 
     /**
@@ -96,7 +100,7 @@ contract TokenERC20 {
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
         _transfer(_from, _to, _value);
         return true;
     }
@@ -134,39 +138,7 @@ contract TokenERC20 {
         }
     }
 
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        _totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    /**
-     * Destroy tokens from other ccount
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        _totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
-    }
-    
+   
   function totalSupply()  constant public returns (uint256 totalSupply) {
     return _totalSupply;
   }
@@ -193,11 +165,11 @@ contract Gosenchouen is owned, TokenERC20 {
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
         require (balanceOf[_from] > _value);                // Check if the sender has enough
-        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
+        require (balanceOf[_to].add(_value) > balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
+        balanceOf[_from] = balanceOf[_from].sub(_value);                         // Subtract from the sender
+        balanceOf[_to] = balanceOf[_to].add(_value);                           // Add the same to the recipient
         Transfer(_from, _to, _value);
     }
 
@@ -205,8 +177,8 @@ contract Gosenchouen is owned, TokenERC20 {
     /// @param target Address to receive the tokens
     /// @param mintedAmount the amount of tokens it will receive
     function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        balanceOf[target] += mintedAmount;
-        _totalSupply += mintedAmount;
+        balanceOf[target] = balanceOf[target].add(mintedAmount);
+        _totalSupply = _totalSupply.add(mintedAmount);
         Transfer(0, this, mintedAmount);
         Transfer(this, target, mintedAmount);
     }
@@ -229,14 +201,14 @@ contract Gosenchouen is owned, TokenERC20 {
     function buy() payable public {
         require(msg.value > 0);
         
-        uint256 amount = msg.value / buyPrice;               // calculates the amount
+        uint256 amount = msg.value.div(buyPrice);               // calculates the amount
 
-        require(_currentSupply + amount <= _totalSupply);
+        require(_currentSupply.add(amount) <= _totalSupply);
 
         _transfer(owner, msg.sender, amount);              // makes the transfers
         
         owner.transfer(msg.value);
-        _currentSupply += amount;
+        _currentSupply = _currentSupply.add(amount);
     }
     
 }
