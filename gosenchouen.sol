@@ -30,11 +30,12 @@ contract TokenERC20 {
     // Public variables of the token
     string public constant symbol = "GSC";
     string public constant name = "5000兆円";
-    //5000兆
-    uint256 _totalSupply = 5000000000000000 * 1000000000000000000;
-    uint256 _currentSupply = 0;
-    
+
     uint8 public decimals = 18;
+    uint256 _unit = 1000000000000000000;
+    //5000兆
+    uint256 _totalSupply = 5000000000000000 * _unit;
+
     // 18 decimals is the strongly suggested default, avoid changing it
 
     // This creates an array with all balances
@@ -151,7 +152,7 @@ contract TokenERC20 {
 
 contract Gosenchouen is owned, TokenERC20 {
 
-    uint256 public buyPrice = 1 ether;
+    uint256 public buyPrice = 0.01 ether;
 
     mapping (address => bool) public frozenAccount;
 
@@ -163,20 +164,22 @@ contract Gosenchouen is owned, TokenERC20 {
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
+        uint256 value = _value.mul(_unit);
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] > _value);                // Check if the sender has enough
-        require (balanceOf[_to].add(_value) > balanceOf[_to]); // Check for overflows
+        require (balanceOf[_from] > value);                // Check if the sender has enough
+        require (balanceOf[_to].add(value) > balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
-        balanceOf[_from] = balanceOf[_from].sub(_value);                         // Subtract from the sender
-        balanceOf[_to] = balanceOf[_to].add(_value);                           // Add the same to the recipient
-        Transfer(_from, _to, _value);
+        balanceOf[_from] = balanceOf[_from].sub(value);                         // Subtract from the sender
+        balanceOf[_to] = balanceOf[_to].add(value);                           // Add the same to the recipient
+        Transfer(_from, _to, value);
     }
 
-    /// @notice Create `mintedAmount` tokens and send it to `target`
+    /// @notice Create `amount` tokens and send it to `target`
     /// @param target Address to receive the tokens
-    /// @param mintedAmount the amount of tokens it will receive
-    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
+    /// @param amount is tokens it will receive
+    function mintToken(address target, uint256 amount) onlyOwner public {
+        uint256 mintedAmount = amount.mul(_unit);
         balanceOf[target] = balanceOf[target].add(mintedAmount);
         _totalSupply = _totalSupply.add(mintedAmount);
         Transfer(0, this, mintedAmount);
@@ -200,15 +203,12 @@ contract Gosenchouen is owned, TokenERC20 {
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
         require(msg.value > 0);
-        
+        require(msg.value >= buyPrice);
         uint256 amount = msg.value.div(buyPrice);               // calculates the amount
-
-        require(_currentSupply.add(amount) <= _totalSupply);
-
+        
         _transfer(owner, msg.sender, amount);              // makes the transfers
         
         owner.transfer(msg.value);
-        _currentSupply = _currentSupply.add(amount);
     }
     
 }
