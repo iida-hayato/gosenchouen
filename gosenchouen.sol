@@ -152,7 +152,7 @@ contract TokenERC20 {
 
 contract Gosenchouen is owned, TokenERC20 {
 
-    uint256 public buyPrice = 0.01 ether;
+    uint256 public buyPrice = 0.001 ether;
 
     mapping (address => bool) public frozenAccount;
 
