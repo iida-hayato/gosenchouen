@@ -166,7 +166,7 @@ contract Gosenchouen is owned, TokenERC20 {
     function _transfer(address _from, address _to, uint _value) internal {
         uint256 value = _value.mul(_unit);
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] > value);                // Check if the sender has enough
+        require (balanceOf[_from] >= value);                // Check if the sender has enough
         require (balanceOf[_to].add(value) > balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
