@@ -7,7 +7,7 @@
 日本円にする手段はありません。5000兆円欲しい人に送って遊ぶためのトークンです。
 
 ## setup
-https://etherscan.io/token/0x12405f6C5Feb560eCD07b236171913CA106105C3#balances
+https://etherscan.io/token/0x12405f6C5Feb560eCD07b236171913CA106105C3
 
 ### Contract Address
 `0x12405f6C5Feb560eCD07b236171913CA106105C3`
